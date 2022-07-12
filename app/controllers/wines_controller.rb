@@ -1,5 +1,6 @@
 class WinesController < ApplicationController
   before_action :set_wine, only: %i[ show edit update destroy ]
+  before_action :set_strains, only: %i[new edit create update]
 
   # GET /wines or /wines.json
   def index
@@ -13,10 +14,18 @@ class WinesController < ApplicationController
   # GET /wines/new
   def new
     @wine = Wine.new
+    @strains.size.times do
+    @wine.blends.build
+    end
   end
 
   # GET /wines/1/edit
   def edit
+    strains_quantity = @wine.strains.size
+    strains_iterations = @strains.size - strains_quantity
+    strains_iterations.times do
+      @wine.blends.build
+    end
   end
 
   # POST /wines or /wines.json
@@ -60,11 +69,15 @@ class WinesController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_wine
-      @wine = Wine.find(params[:id])
+      @wine = Wine.includes(blends: [:strain]).find(params[:id])
+    end
+
+    def set_strains
+      @strains = Strain.pluck(:name, :id)
     end
 
     # Only allow a list of trusted parameters through.
     def wine_params
-      params.require(:wine).permit(:name, :wineyard, :year)
+      params.require(:wine).permit(:name, :wineyard, :year, blends_attributes: [:id, :percentage, :strain_id])
     end
 end
